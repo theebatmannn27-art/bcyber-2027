@@ -7,7 +7,7 @@ arrive even when the app is closed.
 Built for one person's gap year. Everything works offline-first: ticks are written to
 `localStorage` immediately and synced to Supabase only if you add keys.
 
-**Live:** https://bcyber-2027.vercel.app
+**Live:** https://bcyber-2027.vercel.app · **Code:** https://github.com/theebatmannn27-art/bcyber-2027
 
 ---
 
@@ -139,8 +139,10 @@ CRON_SECRET        = any-long-random-string
 Test it by hand any time:
 
 ```bash
-curl "https://your-app.vercel.app/api/remind?secret=YOUR_CRON_SECRET"
+curl "https://bcyber-2027.vercel.app/api/remind?secret=YOUR_CRON_SECRET"
 ```
+
+Without the secret the endpoint returns `401`, so nobody else can use it to spam your Telegram.
 
 You should get `{"ok":true,"sent":true,...}` and a Telegram message reading roughly:
 
@@ -178,6 +180,12 @@ The repo helper creates the repo and pushes in one step:
 
 ```bash
 node scripts/push-github.mjs <github-token> bcyber-2027
+```
+
+Or do everything at once — repo, project, env vars and production deploy:
+
+```bash
+node scripts/ship.mjs --vercel=<token> --github=<token>
 ```
 
 Create the token at [github.com/settings/tokens/new?scopes=repo](https://github.com/settings/tokens/new?scopes=repo).
