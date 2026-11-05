@@ -1,5 +1,5 @@
 // Minimal service worker: offline shell + notification display.
-const CACHE = 'bcyber-v1';
+const CACHE = 'bcyber-v2';
 const SHELL = ['/', '/checklist', '/manifest.webmanifest', '/icon-192.svg'];
 
 self.addEventListener('install', (event) => {
@@ -16,21 +16,44 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Network-first, cache fallback — the app is dynamic, but should still open offline.
+// Never cache page HTML: the app is private, and a cached dashboard could be
+// opened from disk on a locked device. Only static assets are cached.
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
   if (new URL(request.url).origin !== self.location.origin) return;
   if (request.url.includes('/api/')) return;
 
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request).catch(
+        () =>
+          new Response(
+            '<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">' +
+              '<body style="background:#05070d;color:#94a3b8;font-family:system-ui;display:flex;' +
+              'align-items:center;justify-content:center;height:100vh;margin:0;text-align:center">' +
+              '<div><p style="font-size:15px;color:#e2e8f0">You are offline</p>' +
+              '<p style="font-size:12px;margin-top:6px">Reconnect to open the tracker.</p></div></body>',
+            { headers: { 'content-type': 'text/html' }, status: 200 }
+          )
+      )
+    );
+    return;
+  }
+
+  const cacheable = ['script', 'style', 'image', 'font'].includes(request.destination);
+  if (!cacheable) return;
+
   event.respondWith(
     fetch(request)
       .then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(request, copy)).catch(() => {});
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(request, copy)).catch(() => {});
+        }
         return res;
       })
-      .catch(() => caches.match(request).then((hit) => hit || caches.match('/')))
+      .catch(() => caches.match(request).then((hit) => hit || Response.error()))
   );
 });
 

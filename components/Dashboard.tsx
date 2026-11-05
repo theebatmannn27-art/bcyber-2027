@@ -15,6 +15,9 @@ import {
 import { useProgress } from '@/lib/store';
 import { useStudyLog } from '@/lib/studylog';
 import Countdown from './Countdown';
+import TodayPlan from './TodayPlan';
+import FocusTimer from './FocusTimer';
+import LockButton from './LockButton';
 import Ring from './Ring';
 import Bar from './Bar';
 
@@ -65,13 +68,16 @@ export default function Dashboard() {
             {TOTAL_HOURS} hours · {stats.totalTasks} tasks · one target
           </p>
         </div>
-        <span
-          className="chip shrink-0"
-          style={{ color: status.color, borderColor: `${status.color}44`, background: `${status.color}14` }}
-        >
-          <span className="h-1.5 w-1.5 rounded-full" style={{ background: status.color }} />
-          {status.label}
-        </span>
+        <div className="flex shrink-0 items-center gap-2">
+          <span
+            className="chip"
+            style={{ color: status.color, borderColor: `${status.color}44`, background: `${status.color}14` }}
+          >
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: status.color }} />
+            {status.label}
+          </span>
+          <LockButton />
+        </div>
       </header>
 
       {/* countdown */}
@@ -148,6 +154,12 @@ export default function Dashboard() {
           </div>
         </div>
       </section>
+
+      <TodayPlan />
+
+      <div className="mb-3 grid gap-3 sm:grid-cols-2">
+        <FocusTimer />
+      </div>
 
       {/* where you should be */}
       <section className="card mb-3">

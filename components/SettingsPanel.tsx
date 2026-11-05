@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useProgress } from '@/lib/store';
 import { reminderTextLocal, nextMilestoneLocal } from '@/lib/remind-local';
 import { useStudyLog } from '@/lib/studylog';
+import Backup from './Backup';
 
 const NOTIFY_KEY = 'bcyber.notify.v1';
 
@@ -248,6 +249,8 @@ export default function SettingsPanel() {
             </span>
           </li>
         </ul>
+
+        <Backup />
 
         <div className="mt-3 flex flex-wrap gap-2">
           <a className="btn text-[12px]" href="/api/ics">

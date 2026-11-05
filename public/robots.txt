@@ -1,0 +1,3 @@
+# Private study tracker. Not a public site.
+User-agent: *
+Disallow: /
