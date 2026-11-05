@@ -75,7 +75,7 @@ export interface PlanStats {
   requiredPerWeek: number;
   /** how far ahead/behind the pace line, in hours (positive = ahead) */
   paceDelta: number;
-  status: 'ahead' | 'ontrack' | 'behind' | 'done';
+  status: 'notstarted' | 'ahead' | 'ontrack' | 'behind' | 'done';
   currentDomainId: string;
 }
 
@@ -110,6 +110,7 @@ export function computeStats(done: Record<string, boolean>): PlanStats {
 
   let status: PlanStats['status'] = 'ontrack';
   if (hoursLeft <= 0) status = 'done';
+  else if (doneTasks === 0) status = 'notstarted';
   else if (paceDelta > 15) status = 'ahead';
   else if (requiredPerWeek > WEEKLY_TARGET_HOURS * 1.12) status = 'behind';
 

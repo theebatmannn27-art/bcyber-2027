@@ -19,6 +19,7 @@ import Ring from './Ring';
 import Bar from './Bar';
 
 const STATUS_COPY: Record<string, { label: string; color: string; note: string }> = {
+  notstarted: { label: 'Day one', color: '#94a3b8', note: 'Nothing ticked yet. Start with Bandit.' },
   ahead: { label: 'Ahead of pace', color: '#a3e635', note: 'Keep the ratio. Do not coast.' },
   ontrack: { label: 'On pace', color: '#22d3ee', note: 'Protect the 30 hours a week.' },
   behind: { label: 'Behind pace', color: '#fbbf24', note: 'Cut scope, never cut aptitude.' },
@@ -104,7 +105,9 @@ export default function Dashboard() {
           </div>
         </div>
         <p className="mt-3 rounded-lg border border-white/[0.06] bg-black/25 px-3 py-2 text-[12px] leading-relaxed text-slate-400">
-          {stats.status === 'behind'
+          {stats.status === 'notstarted'
+            ? 'Nothing logged yet. The first tick is the only one that matters today — open the checklist and finish Bandit 0.'
+            : stats.status === 'behind'
             ? `You need ${stats.requiredPerWeek.toFixed(1)} h a week against a 30 h plan — roughly ${Math.abs(
                 driftDays
               )} days behind. Compress Foundations and Web; they are the least new material for you.`
