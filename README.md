@@ -17,7 +17,23 @@ Built for one person's gap year. Everything works offline-first: ticks are writt
 |---|---|
 | **Dashboard** (`/`) | Countdown to the entrance window, % complete, hours done against 740, required hours per week, streak, today's logged hours, the next five tasks, per-domain progress bars, and the full 34-week calendar strip |
 | **Checklist** (`/checklist`) | All 344 tasks grouped domain → subtopic. Collapsible sections, per-subtopic progress, filter by *To do* / *Done* / *Milestones*, search across all ten domains, tick-all for a subtopic |
-| **Settings** (`/settings`) | Notification permission, reminder time, test notification, 7-day study log, `.ics` calendar export, reset |
+| **Settings** (`/settings`) | Notification permission, reminder time, test notification, 7-day study log, backup export/restore, `.ics` calendar export, reset |
+| **Unlock** (`/unlock`) | Passcode gate — the whole site is closed without it |
+
+### Private by default
+
+The site URL alone gets you nothing. Every route is behind a passcode checked in **Edge middleware**,
+so the HTML is never sent to a stranger — a redirect to `/unlock` is.
+
+- Passcode compared as SHA-256 hashes in constant time, so response length never leaks a prefix
+- 8 attempts per 10 minutes per IP, then a 10-minute lockout
+- Session cookie is `HttpOnly`, `Secure`, `SameSite=Lax`, 30 → **14 days**, signed `HMAC-SHA256`
+  and carrying no passcode
+- **Lock** button in the dashboard header closes the session instantly
+- `noindex, nofollow` on every page, `robots.txt` disallows everything, `X-Robots-Tag` on responses
+- CSP with `frame-ancestors 'none'`, HSTS, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`,
+  `Permissions-Policy` denying camera/mic/geolocation
+- The service worker **never caches page HTML**, so a locked device can't reopen the dashboard from cache
 
 ### The three things that make it useful
 
@@ -28,6 +44,13 @@ Built for one person's gap year. Everything works offline-first: ticks are writt
    convenience, not a dependency.
 3. **It nags you without needing the app open.** A Vercel Cron job messages you on Telegram every
    evening at 19:00 IST.
+
+### Beyond the checklist
+
+- **Today** — picks 2–4 tasks that add up to the hours you actually need today, tickable inline
+- **Focus session** — 25/45/60-minute timer that logs its own hours on completion and survives a reload
+- **Backup / restore** — one JSON file with every tick and hour, because `localStorage` can be wiped
+- **Daily nudge** — Telegram at 19:00 IST, plus an in-app permission prompt on first open
 
 ---
 
@@ -92,6 +115,26 @@ git push -u origin main
 
 Then import the repo at [vercel.com/new](https://vercel.com/new). Framework preset is detected as
 Next.js; no build settings to change.
+
+---
+
+## The lock
+
+Set two environment variables in Vercel → **Settings → Environment Variables**, then redeploy:
+
+```
+APP_PASSCODE        = your passphrase here
+APP_SESSION_SECRET  = any long random string
+```
+
+- **Leave `APP_PASSCODE` unset** and the gate is disabled — the app behaves as a public demo.
+- **Change `APP_PASSCODE`** any time; that is your new passcode on next deploy.
+- **Change `APP_SESSION_SECRET`** to sign out every device at once (useful if a phone is lost).
+
+Honest limitation: sessions are stateless signed cookies, so hitting **Lock** clears the cookie on
+that device but cannot revoke a copy of the cookie someone already stole from it. That is what the
+14-day expiry is for. If you ever want true server-side revocation, the session table in
+`supabase/schema.sql` is where it would go.
 
 ---
 
