@@ -45,6 +45,32 @@ so the HTML is never sent to a stranger — a redirect to `/unlock` is.
 3. **It nags you without needing the app open.** A Vercel Cron job messages you on Telegram every
    evening at 19:00 IST.
 
+### Cross-device sync (live)
+
+Tick a task on your phone, open the laptop — it is there within ~12 seconds, and instantly when the
+tab regains focus.
+
+- **Local-first.** Every tick is written to `localStorage` before any network call, so it works on a
+  train with no signal. Sync reconciles later.
+- **Conflict-free merge.** Each tick carries the millisecond it was changed at. For every task the
+  newer timestamp wins, so a tick on one device and an un-tick on another resolve deterministically
+  instead of one silently overwriting the other.
+- **Streak is derived from tick timestamps**, not stored, so it is identical everywhere.
+- Study hours sync the same way.
+
+**How the security works:** the browser holds *no* Supabase key. Requests go to `/api/sync`, which
+sits behind the passcode gate and uses the service role key from server env. RLS is enabled on all
+three tables with **zero policies**, so even if someone extracted the anon key it would read nothing.
+
+```
+ticks   (profile, task_id, on_state, at)   ← one row per task, atomic LWW merge
+hours   (profile, day, hours, at)
+meta    (profile, streak, last_tick)
+```
+
+> **Free-tier note:** Supabase pauses idle projects after about a week without traffic. If sync ever
+> stops, open the Supabase dashboard and restore the project — the data stays.
+
 ### Beyond the checklist
 
 - **Today** — picks 2–4 tasks that add up to the hours you actually need today, tickable inline
@@ -143,24 +169,24 @@ that device but cannot revoke a copy of the cookie someone already stole from it
 Every one of these is optional. Skip them and the app still works — it just keeps everything on
 one device.
 
-### 1. Supabase — sync ticks across devices
+### 1. Supabase — sync (already configured)
 
-1. Create a project at [supabase.com](https://supabase.com) (free tier is plenty).
-2. Open **SQL Editor** and paste all of **`supabase/schema.sql`**. Run it.
-3. Go to **Project Settings → API** and copy the Project URL and the `anon` `public` key.
-4. Add both to Vercel → **Settings → Environment Variables**:
+This is live on the deployed app. If you ever need to rebuild it:
+
+1. Create a project at [supabase.com](https://supabase.com) (free tier is plenty) — Mumbai
+   (`ap-south-1`) keeps latency low from India.
+2. Run `supabase/sync-schema.sql` in the **SQL Editor**.
+3. Add to Vercel → **Settings → Environment Variables**:
 
 ```
-NEXT_PUBLIC_SUPABASE_URL      = https://xxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY = eyJhbGciOi...
+SUPABASE_URL              = https://xxxx.supabase.co
+SUPABASE_SERVICE_ROLE_KEY = eyJhbGciOi...        # encrypted, server-only
 ```
 
-5. Redeploy.
+4. Redeploy.
 
-The schema creates one `progress` table with a row per device, keyed by a random UUID that lives in
-the browser. Row-level security allows read/write on that table only. That is the entire model —
-**the device UUID is the secret**, which is fine for a personal study tracker and not fine for
-anything sensitive. Do not put personal data in it.
+Note the service key is **not** prefixed `NEXT_PUBLIC_` — it must never be shipped to the browser.
+All database access goes through `/api/sync`.
 
 ### 2. Telegram — reminders with the app closed
 
