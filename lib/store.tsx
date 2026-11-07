@@ -134,10 +134,24 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
 
   /* ---------- boot ---------- */
   useEffect(() => {
-    setTicks(readTicks());
-    setHoursMap(readHours());
-    setReady(true);
-    void pull();
+    const boot = async () => {
+      const localTicks = readTicks();
+      const localHours = readHours();
+      setTicks(localTicks);
+      setHoursMap(localHours);
+      ticksRef.current = localTicks;
+      hoursRef.current = localHours;
+      setReady(true);
+
+      await pull();
+
+      // Anything that exists locally — including ticks made before sync
+      // existed, or while offline — must reach the server on first load.
+      dirtyTicks.current = { ...ticksRef.current, ...dirtyTicks.current };
+      dirtyHours.current = { ...hoursRef.current, ...dirtyHours.current };
+      void push();
+    };
+    void boot();
 
     const id = setInterval(() => {
       if (document.visibilityState === 'visible' && navigator.onLine) void pull();
