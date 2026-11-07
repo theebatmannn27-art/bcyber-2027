@@ -13,7 +13,7 @@ import {
   TARGET_DATE,
 } from '@/lib/plan';
 import { useProgress } from '@/lib/store';
-import { useStudyLog } from '@/lib/studylog';
+import { useStudyLog } from '@/lib/store';
 import Countdown from './Countdown';
 import TodayPlan from './TodayPlan';
 import FocusTimer from './FocusTimer';

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useProgress } from '@/lib/store';
 import { reminderTextLocal, nextMilestoneLocal } from '@/lib/remind-local';
-import { useStudyLog } from '@/lib/studylog';
+import { useStudyLog } from '@/lib/store';
 import Backup from './Backup';
 
 const NOTIFY_KEY = 'bcyber.notify.v1';
@@ -34,7 +34,7 @@ function writeCfg(c: NotifyCfg) {
 }
 
 export default function SettingsPanel() {
-  const { done, resetAll, sync, cloudEnabled, streak } = useProgress();
+  const { done, resetAll, sync, cloudEnabled, streak, lastSyncedAt, refresh } = useProgress();
   const study = useStudyLog();
   const [cfg, setCfg] = useState<NotifyCfg>({ enabled: false, hour: 19, minute: 0 });
   const [perm, setPerm] = useState<NotificationPermission | 'unsupported'>('default');
@@ -231,11 +231,21 @@ export default function SettingsPanel() {
           <li className="flex justify-between gap-3">
             <span>Sync</span>
             <span className="text-slate-200">
-              {cloudEnabled
-                ? sync === 'error'
-                  ? 'Supabase configured, last write failed'
-                  : `Supabase · ${sync}`
-                : 'local only'}
+              {cloudEnabled ? (
+                <>
+                  {sync === 'saving' ? 'saving…' : sync === 'offline' ? 'offline' : sync === 'error' ? 'retrying' : 'live'}
+                  {lastSyncedAt && (
+                    <span className="text-slate-500">
+                      {' · '}
+                      {Math.max(0, Math.round((Date.now() - lastSyncedAt) / 1000))}s ago
+                    </span>
+                  )}
+                </>
+              ) : sync === 'local' ? (
+                'this device only'
+              ) : (
+                'connecting…'
+              )}
             </span>
           </li>
           <li className="flex justify-between gap-3">
@@ -249,6 +259,15 @@ export default function SettingsPanel() {
             </span>
           </li>
         </ul>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button className="btn text-[12px]" onClick={() => void refresh()}>
+            Sync now
+          </button>
+          <span className="text-[11px] text-slate-500">
+            Every device with the passcode shares one tracker.
+          </span>
+        </div>
 
         <Backup />
 

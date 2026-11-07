@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useStudyLog } from '@/lib/studylog';
+import { useStudyLog } from '@/lib/store';
 
 const KEY = 'bcyber.focus.v1';
 const LENGTHS = [25, 45, 60] as const;

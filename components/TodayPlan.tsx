@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { DOMAINS } from '@/data/syllabus';
 import { TASK_HOURS, computeStats } from '@/lib/plan';
 import { useProgress } from '@/lib/store';
-import { useStudyLog } from '@/lib/studylog';
+import { useStudyLog } from '@/lib/store';
 
 /**
  * "Do these three things today." Turns the 344-task wall into a day-sized list

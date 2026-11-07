@@ -1,7 +1,3 @@
-'use client';
-
-import { useCallback, useEffect, useState } from 'react';
-
 const KEY = 'bcyber.hours.v1';
 
 export type HourLog = Record<string, number>; // YYYY-MM-DD -> hours
@@ -17,52 +13,6 @@ function read(): HourLog {
   } catch {
     return {};
   }
-}
-
-export function useStudyLog() {
-  const [log, setLog] = useState<HourLog>({});
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    setLog(read());
-    setReady(true);
-  }, []);
-
-  const add = useCallback((hours: number, day = todayKey()) => {
-    if (!Number.isFinite(hours) || hours <= 0) return;
-    setLog((cur) => {
-      const next = { ...cur, [day]: Math.round(((cur[day] ?? 0) + hours) * 100) / 100 };
-      try {
-        localStorage.setItem(KEY, JSON.stringify(next));
-      } catch {}
-      return next;
-    });
-  }, []);
-
-  const set = useCallback((hours: number, day = todayKey()) => {
-    setLog((cur) => {
-      const next = { ...cur };
-      if (hours > 0) next[day] = Math.round(hours * 100) / 100;
-      else delete next[day];
-      try {
-        localStorage.setItem(KEY, JSON.stringify(next));
-      } catch {}
-      return next;
-    });
-  }, []);
-
-  const weekTotal = useCallback(() => {
-    const out: { key: string; hours: number }[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const k = todayKey(d);
-      out.push({ key: k, hours: log[k] ?? 0 });
-    }
-    return out;
-  }, [log]);
-
-  return { log, add, set, ready, weekTotal, today: log[todayKey()] ?? 0 };
 }
 
 export function makeIcs(): string {
